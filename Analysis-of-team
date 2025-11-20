@@ -1,0 +1,57 @@
+import pandas as pd
+import numpy as np
+
+df = pd.read_csv("Cleaned_All_Leagues_Seasons.csv")
+
+# 1. League-wise average stats
+league_summary = df.groupby("League").agg({
+    "Goals_Scored": "mean",
+    "Goals_Conceded": "mean",
+    "Points": "mean"
+})
+league_summary.to_csv("league_summary.csv")
+
+# 2. Team performance summary
+team_summary = df.groupby("Team").agg({
+    "Points": ["mean", "max"],
+    "Goals_Scored": ["sum", "mean"],
+    "Goal_Diff": "mean"
+})
+team_summary.to_csv("team_summary.csv")
+
+# 3. Best performing team in each league
+best_teams = df.groupby(["League", "Team"])["Points"].sum().reset_index()
+best_teams = best_teams.loc[best_teams.groupby("League")["Points"].idxmax()]
+best_teams.to_csv("best_teams_per_league.csv", index=False)
+
+# 4. Best team overall by goal difference
+best_gd = df.loc[df["Goal_Diff"].idxmax()].to_frame().T
+best_gd.to_csv("best_goal_difference_team.csv", index=False)
+
+# 5. Top 5 scoring teams
+top_scorers = df.groupby("Team")["Goals_Scored"].sum().sort_values(ascending=False).head(5)
+top_scorers.to_csv("top_scorers.csv")
+
+# 6. Teams that played in all seasons
+season_counts = df.groupby("Team")["Season"].nunique()
+consistent_teams = season_counts[season_counts == len(df["Season"].unique())].index.to_list()
+pd.DataFrame({"Consistent Teams": consistent_teams}).to_csv("consistent_teams.csv", index=False)
+
+# 7. Average points by season
+season_summary = df.groupby("Season")["Points"].mean()
+season_summary.to_csv("average_points_by_season.csv")
+
+# 8. League competitiveness based on point gap
+league_comp = df.groupby("League")["Points"].agg(lambda x: x.max() - x.min())
+league_comp.to_csv("league_competitiveness.csv")
+
+# 9. Teams with the most wins
+win_summary = df.groupby("Team")["Wins"].sum().sort_values(ascending=False)
+win_summary.to_csv("wins_summary.csv")
+
+# 10. Teams with stable performance across seasons (point variation)
+points_variation = df.groupby("Team")["Points"].std().sort_values()
+stable_teams = points_variation.head(5)
+stable_teams.to_csv("most_stable_teams.csv")
+
+print("Analysis complete with all outputs saved as CSV.")
