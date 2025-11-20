@@ -1,0 +1,58 @@
+import pandas as pd
+
+def clean_data(input_file, output_file):
+
+    # 1. Load the scraped CSV file
+    # Loading the raw data so we can start cleaning it
+    df = pd.read_csv(input_file)
+    print("Initial Data Loaded:")
+    print(df.head())   # Quick preview to make sure everything looks okay
+
+    # 2. Rename columns to clear, understandable names
+    # This makes the dataset easier for everyone on the team to work with
+    df.columns = [
+        "League", "Season", "Position", "Team",
+        "Games_Played", "Wins", "Draws", "Losses",
+        "Goals_Scored", "Goals_Conceded", "Goal_Diff", "Points"
+    ]
+    print("\nAfter Renaming Columns:")
+    print(df.head())
+
+    # 3. Convert all numeric columns into proper integer format
+    # Sometimes scraped data comes as text  this fixes that problem 
+    numeric_cols = [
+        "Position", "Games_Played", "Wins", "Draws", "Losses",
+        "Goals_Scored", "Goals_Conceded", "Goal_Diff", "Points"
+    ]
+    for col in numeric_cols:
+        df[col] = pd.to_numeric(df[col], errors="coerce")  # Convert or set invalid entries to NaN
+
+    print("\nAfter Converting Numeric Columns:")
+    print(df.dtypes)  # Just checking if the types are correct now
+
+    # 4. Remove any missing or duplicate rows
+    # This step ensures the dataset is clean and reliable
+    df = df.dropna()
+    df = df.drop_duplicates()
+    print("\nAfter Removing Missing & Duplicate Rows:")
+    print(df.head())
+
+    # 5. Recalculate Goal Difference (just to be safe)
+    # Even if GD was scraped, recalculating ensures correctness
+    df["Goal_Diff"] = df["Goals_Scored"] - df["Goals_Conceded"]
+
+    print("\nAfter Recalculating Goal Difference:")
+    print(df.head())
+
+    # 6. Save the cleaned dataset into a fresh CSV file
+    # This is the final cleaned file that the whole team will use
+    df.to_csv(output_file, index=False)
+    print(f"\nCleaned file saved as: {output_file}")
+
+    return df
+
+
+# Running the cleaning function
+cleaned_df = clean_data("All_Leagues_Seasons.csv", "Cleaned_All_Leagues_Seasons.csv")
+
+print("\nCleaning done successfully!")
