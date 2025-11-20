@@ -1,0 +1,59 @@
+import requests
+from bs4 import BeautifulSoup
+
+leagues = {
+    "Premier League": "eng.1",
+    "La Liga": "esp.1",
+    "Serie A": "ita.1"
+}
+
+seasons = ["2024", "2023", "2022", "2021", "2020"]
+
+headers = {"User-Agent": "Mozilla/5.0"}
+
+all_data = []
+
+for league_name, league_code in leagues.items():
+    for season in seasons:
+        url = f"https://www.espn.com/soccer/standings/_/league/{league_code}/season/{season}"
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        table_left = soup.find("table", class_="Table--fixed-left")
+        table_right = soup.find_all("table", class_="Table")[-1]
+
+        if not table_left or not table_right:
+            continue
+
+        teams_data, stats_data = [], []
+
+        for tr in table_left.find_all("tr", class_="Table__TR"):
+            pos = tr.find("span", class_="team-position")
+            name = tr.find("span", class_="hide-mobile")
+            if pos and name:
+                teams_data.append([pos.text.strip(), name.text.strip()])
+
+        for row in table_right.find_all("tr", class_="Table__TR")[1:]:
+            cols = [td.text.strip() for td in row.find_all("td")]
+            if len(cols) >= 8:
+                stats_data.append(cols[:8])
+
+        for i in range(min(len(teams_data), len(stats_data))):
+            all_data.append(
+                [league_name, season] + teams_data[i] + stats_data[i]
+            )
+
+filename = "All_Leagues_Seasons.csv"
+headers_csv = [
+    "League", "Season", "Position", "Team",
+    "GP", "W", "D", "L", "GF", "GA", "GD", "Pts"
+]
+
+f = open(filename, "w")
+f.write(",".join(headers_csv) + "\n")
+for row in all_data:
+    f.write(",".join(row) + "\n")
+f.close()
+
+print("Data scraped successfully")
+
