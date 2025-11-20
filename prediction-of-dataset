@@ -1,0 +1,34 @@
+import numpy as np
+
+# Load dataset
+data = np.genfromtxt("Cleaned_All_Leagues_Seasons.csv",
+                     delimiter=",", skip_header=1, dtype=str)
+
+# Extract relevant columns
+points = data[:, 11].astype(float)       # Points column
+position = data[:, 2].astype(int)        # Position column
+
+
+#  If points >= 60,this is Strong Team else the team is weak
+predicted = np.where(points >= 60, "Strong", "Weak")
+
+# If position <= 4, the postion is strong else weak
+actual = np.where(position <= 4, "Strong", "Weak")
+
+#comparing values
+correct = np.sum(predicted == actual)
+total = len(actual)
+accuracy = (correct / total) * 100
+
+
+print(" Predictions of Dataset:")
+for i in range(10):
+    print(f"Actual: {actual[i]:<6} :  Predicted: {predicted[i]}")
+
+
+print()
+print()
+print("Final Report:")
+print("Total Samples:", total)
+print("Correct Predictions:", correct)
+print(f"Accuracy: {accuracy:.2f}%")
